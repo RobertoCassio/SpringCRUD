@@ -1,0 +1,5 @@
+package com.api.produto.dtos;
+
+public record ProductRecordDTO() {
+
+}
