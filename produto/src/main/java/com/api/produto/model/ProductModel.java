@@ -21,6 +21,13 @@ public class ProductModel implements Serializable {
 	private String name;
 	private BigDecimal Value;
 	private Date deleted_at;
+	public Date getUpdated_at() {
+		return updated_at;
+	}
+	public void setUpdated_at(Date updated_at) {
+		this.updated_at = updated_at;
+	}
+	private Date updated_at;
 	public UUID getIdProduct() {
 		return idProduct;
 	}
