@@ -1,14 +1,10 @@
 package com.api.produto.controllers;
 
-import java.sql.Date;
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 
-import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -20,7 +16,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.api.produto.dtos.ProductRecordDTO;
 import com.api.produto.model.ProductModel;
-import com.api.produto.repositories.ProductRepository;
+import com.api.produto.service.ProductService;
 
 import jakarta.validation.Valid;
 
@@ -30,73 +26,46 @@ import jakarta.validation.Valid;
 public class ProductController {
 
 	@Autowired
-	ProductRepository productRepository;
+	ProductService productService;
+	// ProductRepository productRepository;
 
 	@PostMapping("/products")
-	public ResponseEntity<ProductModel> saveProduct(@RequestBody @Valid ProductRecordDTO productRecordDto) { // Response
-																												// entity
-																												// - Vai
-																												// retornar
-																												// o
-																												// método
-																												// saveProduct
-																												// do
-																												// tipo
-																												// ProductModel
+	public ResponseEntity<ProductModel> saveProduct(@RequestBody @Valid ProductRecordDTO productRecordDto) {
 		// @RequestBody - Como corpo ele recebe o Dto - sendo um nome e um valor
 		// conforme no ProductRecordDTO.java com as validações.
 		// O @Valid é para que as validações funcionem aqui.
-		var productModel = new ProductModel(); // Vamos receber um productModel, não um DTO, o DTO é como se fosse
-												// apenas um modelo.
-		BeanUtils.copyProperties(productRecordDto, productModel); // Converte DTO para Model - Método do próprio string
-																	// - Recebe o productRecordDto e converte para
-																	// productModel
-		return ResponseEntity.status(HttpStatus.CREATED).body(productRepository.save(productModel)); // Retorna o
-																										// response
-																										// entity
-		// HTTP Status Created para retornar par ao cliente que foi criado -> e no body
-		// retorna o que foi salvo.
-		// Save também como recurso do spring
+		var savedProduct = productService.createProduct(productRecordDto);
+		return savedProduct != null ? ResponseEntity.status(HttpStatus.CREATED).body(savedProduct)
+				: ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
 	}
 
 	@GetMapping("/products")
 	public ResponseEntity<List<ProductModel>> getAllProducts() {
-		return ResponseEntity.status(HttpStatus.OK).body(productRepository.findAll()); // Get All já implementado
-																						// através do find all
+		List<ProductModel> products = productService.getAllProducts();
+		return ResponseEntity.status(HttpStatus.OK).body(products);
+
 	}
 
 	@GetMapping("/products/{id}")
-	public ResponseEntity<Object> getOneProduct(@PathVariable(value = "id") UUID id) { // Essa anotação obtém o id quem
-																						// vem na URI, dentro de value é
-																						// o valor definido na URI, e em
-																						// seguida o tipo do mesmo
-		Optional<ProductModel> productO = productRepository.findById(id); // Optional pode ou não ser nulo
-		if (productO.isEmpty()) { // Caso seja avisa que não foi encontrado
-			return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Product Not Found.");
-		} // Caso não retorna o produto
-		return ResponseEntity.status(HttpStatus.OK).body(productO.get());
+	public ResponseEntity<Object> getOneProduct(@PathVariable(value = "id") UUID id) {
+		var product = productService.getProductById(id);
+		return product == null ? ResponseEntity.status(HttpStatus.NOT_FOUND).body("Product Not Found.")
+				: ResponseEntity.status(HttpStatus.OK).body(product);
 	}
 
-	@PutMapping("/products/{id}")
+	@PutMapping("/products/edit/{id}")
 	public ResponseEntity<Object> updateProduct(@PathVariable(value = "id") UUID id,
 			@RequestBody @Valid ProductRecordDTO productRecordDTO) {
-		Optional<ProductModel> productO = productRepository.findById(id);
-		if (productO.isEmpty()) {
-			return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Product Not Found");
-		}
-		var productModel = productO.get(); // Atentar-se aqui, essencial não inicial um productModel do 0 já que o id já
-		productModel.setUpdated_at(new Date(System.currentTimeMillis()));									// existe
-		BeanUtils.copyProperties(productRecordDTO, productModel);
-		return ResponseEntity.status(HttpStatus.OK).body(productRepository.save(productModel));
+		ProductModel product = productService.updateProduct(id, productRecordDTO);
+		return product == null ? ResponseEntity.status(HttpStatus.NOT_FOUND).body("Product Not Found.")
+				: ResponseEntity.status(HttpStatus.OK).body(product);
 	}
 
-	@DeleteMapping("/products/{id}")
+	@DeleteMapping("/products/delete/{id}")
 	public ResponseEntity<Object> deleteProduct(@PathVariable(value = "id") UUID id) {
-		Optional<ProductModel> productO = productRepository.findById(id);
-		if (productO.isEmpty()) {
-			return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Product Not Found");
-		}
-		productRepository.delete(productO.get());
-		return ResponseEntity.status(HttpStatus.OK).body("Product Deleted Sucessfully");
+		return productService.deleteProduct(id)
+				? ResponseEntity.status(HttpStatus.OK).body("Product Deleted Sucessfully")
+				: ResponseEntity.status(HttpStatus.NOT_FOUND).body("Product Not Found.");
 	}
+
 }

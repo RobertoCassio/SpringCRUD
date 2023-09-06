@@ -1,0 +1,70 @@
+package com.api.produto.service;
+
+import java.sql.Date;
+import java.util.List;
+import java.util.UUID;
+
+import org.springframework.beans.BeanUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.web.bind.annotation.RequestBody;
+
+import com.api.produto.dtos.ProductRecordDTO;
+import com.api.produto.model.ProductModel;
+import com.api.produto.repositories.ProductRepository;
+
+import jakarta.validation.Valid;
+@Service
+public class ProductService {
+	@Autowired
+	private ProductRepository productRepository;
+	
+	public ProductModel createProduct(@RequestBody @Valid ProductRecordDTO productRecordDTO) {
+		
+		var productModel = new ProductModel(); // Vamos receber um productModel, não um DTO, o DTO é como se fosse
+		// apenas um modelo.
+		BeanUtils.copyProperties(productRecordDTO, productModel);
+		// Converte DTO para Model - Método do próprio string
+		// - Recebe o productRecordDto e converte para
+		// productModel
+
+		// Save também como recurso do spring
+		return productRepository.save(productModel);
+	}
+	
+	public List<ProductModel> getAllProducts(){
+		return productRepository.findAll();
+	}
+	
+	public ProductModel getProductById(UUID id) {
+		var productO = productRepository.findById(id).orElse(null); //Optional pois pode ou não ser nulo
+		return productO;
+	}
+	public ProductModel updateProduct(UUID id, ProductRecordDTO productRecordDTO) {
+		ProductModel productModel = productRepository.findById(id).orElse(null);
+		if (productModel != null) {
+			BeanUtils.copyProperties(productRecordDTO, productModel);
+			productModel.setUpdated_at(new Date (System.currentTimeMillis()));
+			return productRepository.save(productModel);
+		} 
+		return null;
+	}
+	public ProductModel softDeleteProduct(UUID id) {
+		ProductModel productModel = productRepository.findById(id).orElse(null);
+		if (productModel != null) {
+			productModel.setDeleted_at(new Date (System.currentTimeMillis()));
+			return productRepository.save(productModel);
+		}
+		return null;
+	}
+	public boolean deleteProduct(UUID id) {
+		ProductModel productModel = productRepository.findById(id).orElse(null);
+		if (productModel != null) {
+			productRepository.delete(productModel);
+			return true;
+		}
+		return false;
+	}
+	
+
+}

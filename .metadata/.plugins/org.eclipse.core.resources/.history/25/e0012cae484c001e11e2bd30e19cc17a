@@ -1,0 +1,76 @@
+package com.api.produto.controllers;
+
+import java.sql.Date;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+
+import org.springframework.beans.BeanUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.HttpStatusCode;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RestController;
+
+import com.api.produto.dtos.ProductRecordDTO;
+import com.api.produto.model.ProductModel;
+import com.api.produto.repositories.ProductRepository;
+import com.api.produto.service.ProductService;
+
+import jakarta.validation.Valid;
+
+//API Rest- 4 Níveis - 1- Utilize Protocolo HTTP 2-Recursos bem definidos e corretos sos das URI's (Utilização de substantivos)
+//3- Utilização dos métodos HTTP de forma semântica (Para salvar o post, para listar o get, para deletar o delete, para atualizar o put)
+@RestController
+public class ProductController {
+
+	@Autowired
+	ProductService productService;
+	// ProductRepository productRepository;
+
+	@PostMapping("/products")
+	public ResponseEntity<ProductModel> saveProduct(@RequestBody @Valid ProductRecordDTO productRecordDto) {
+		// @RequestBody - Como corpo ele recebe o Dto - sendo um nome e um valor
+		// conforme no ProductRecordDTO.java com as validações.
+		// O @Valid é para que as validações funcionem aqui.
+		var savedProduct = productService.createProduct(productRecordDto);
+		return savedProduct != null ? ResponseEntity.status(HttpStatus.CREATED).body(savedProduct)
+				: ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+	}
+
+	@GetMapping("/products")
+	public ResponseEntity<List<ProductModel>> getAllProducts() {
+		List<ProductModel> products = productService.getAllProducts();
+		return ResponseEntity.status(HttpStatus.OK).body(products);
+
+	}
+
+	@GetMapping("/products/{id}")
+	public ResponseEntity<Object> getOneProduct(@PathVariable(value = "id") UUID id) {
+		var product = productService.getProductById(id);
+		return product == null ? ResponseEntity.status(HttpStatus.NOT_FOUND).body("Product Not Found.")
+				: ResponseEntity.status(HttpStatus.OK).body(product);
+	}
+
+	@PutMapping("/products/{id}")
+	public ResponseEntity<Object> updateProduct(@PathVariable(value = "id") UUID id,
+			@RequestBody @Valid ProductRecordDTO productRecordDTO) {
+		ProductModel product = productService.updateProduct(id, productRecordDTO);
+		return product == null ? ResponseEntity.status(HttpStatus.NOT_FOUND).body("Product Not Found.")
+				: ResponseEntity.status(HttpStatus.OK).body(product);
+	}
+
+	@DeleteMapping("/products/{id}")
+	public ResponseEntity<Object> deleteProduct(@PathVariable(value = "id") UUID id) {
+		return productService.deleteProduct(id)
+				? ResponseEntity.status(HttpStatus.OK).body("Product Deleted Sucessfully")
+				: ResponseEntity.status(HttpStatus.NOT_FOUND).body("Product Not Found.");
+	}
+
+}
