@@ -25,6 +25,7 @@ public class ProductService {
 		var productModel = new ProductModel(); // Vamos receber um productModel, não um DTO, o DTO é como se fosse
 		// apenas um modelo.
 		BeanUtils.copyProperties(productRecordDTO, productModel);
+		productModel.setCreated_at(new Date(System.currentTimeMillis()));
 		// Converte DTO para Model - Método do próprio string
 		// - Recebe o productRecordDto e converte para
 		// productModel

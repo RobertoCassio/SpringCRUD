@@ -1,0 +1,115 @@
+package com.api.produto.service;
+
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.mockitoSession;
+
+import java.math.BigDecimal;
+import java.sql.Date;
+import java.util.ArrayList;
+import java.util.List;
+
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.dao.DataIntegrityViolationException;
+
+import com.api.produto.dtos.ProductRecordDTO;
+import com.api.produto.model.ProductModel;
+import com.api.produto.repositories.ProductRepository;
+
+import jakarta.transaction.Transactional;
+
+@SpringBootTest
+@Transactional
+class ProductServiceTest {
+	@Autowired
+	private ProductService productService;
+
+	@Test
+	void testCreateProductSucess() {
+		// Cria um ProductRecordDTo ficticio para teste
+		ProductRecordDTO productRecordDTO = new ProductRecordDTO("Produto de Teste", new BigDecimal("300.00"));
+		Date currentTime = new Date(System.currentTimeMillis());
+		// Método para criação do Produto
+		ProductModel createdProduct = productService.createProduct(productRecordDTO);
+
+		// Verificações
+		assertNotNull(createdProduct); // Verifica se o produto foi criado
+		assertNotNull(createdProduct.getIdProduct()); // Verifica se ID não é null
+		assertEquals("Produto de Teste", createdProduct.getName());// Verificação do Nome
+		assertEquals(currentTime, createdProduct.getCreated_at()); // Verificação do CreatedAt
+		assertEquals(new BigDecimal("300.00"), createdProduct.getValue()); // Verificação de Preço
+	}
+
+	@Test
+	void testCreateProductWithDatabaseError() {
+
+		// Crie um ProductRecordDTO válido
+		ProductRecordDTO productRecordDTO = new ProductRecordDTO("Produto de Teste", new BigDecimal("300.00"));
+
+		// Forçando uma restrição única, criando o mesmo produto duas vezes
+		productService.createProduct(productRecordDTO);
+
+		assertThrows(DataIntegrityViolationException.class, () -> {
+			productService.createProduct(productRecordDTO);
+		});
+	}
+
+	@Test
+	void testCreateProductWithBlankName() {
+		ProductRecordDTO productRecordDTO = new ProductRecordDTO("", new BigDecimal("300.00"));
+		ProductModel createdProduct = productService.createProduct(productRecordDTO);
+		assertNull(createdProduct);
+	}
+
+	@Test
+	void testCreateProductWithBlankValue() {
+		assertThrows(NullPointerException.class, () -> {
+			ProductRecordDTO productRecordDTO = new ProductRecordDTO("Produto de Teste", new BigDecimal(""));
+			productService.createProduct(productRecordDTO);
+		});
+	}
+
+	@Test
+	// Teste para multiplos criados simultaneamente
+	void testCreateMultipleProducts() {
+		// Crie vários ProductRecordDTOs fictícios
+		ProductRecordDTO product1 = new ProductRecordDTO("Produto 1", new BigDecimal("10.00"));
+		ProductRecordDTO product2 = new ProductRecordDTO("Produto 2", new BigDecimal("20.00"));
+		ProductRecordDTO product3 = new ProductRecordDTO("Produto 3", new BigDecimal("30.00"));
+
+		// Crie os produtos e verifique se foram criados corretamente
+		ProductModel createdProduct1 = productService.createProduct(product1);
+		ProductModel createdProduct2 = productService.createProduct(product2);
+		ProductModel createdProduct3 = productService.createProduct(product3);
+
+		assertNotNull(createdProduct1);
+		assertNotNull(createdProduct2);
+		assertNotNull(createdProduct3);
+	}
+
+	/*@Test
+	void testGetAllProducts() {
+		List<ProductRecordDTO> productList = new ArrayList<>();
+		productList.add(new ProductRecordDTO("Produto 1", new BigDecimal ("10.0")));
+		productList.add(new ProductRecordDTO("Produto 2", new BigDecimal ("20.0")));
+		productList.add(new ProductRecordDTO("Produto 3", new BigDecimal ("30.0")));
+		
+	}*/
+
+	@Test
+	void testGetProductById() {
+		fail("Not yet implemented");
+	}
+
+	@Test
+	void testUpdateProduct() {
+		fail("Not yet implemented");
+	}
+
+	@Test
+	void testDeleteProduct() {
+		fail("Not yet implemented");
+	}
+
+}
