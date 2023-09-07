@@ -2,7 +2,7 @@
 
 ## Descrição
 
-O Nome do Seu Projeto é uma aplicação de gerenciamento de produtos desenvolvida com o framework Spring Boot. Ela fornece uma plataforma para adicionar, listar, atualizar e excluir produtos.
+Esse Spring em CRUD é uma aplicação de gerenciamento de produtos desenvolvida com o framework Spring Boot. Ela fornece uma plataforma para adicionar, listar, atualizar e excluir produtos.
 Essa aplicação foi projetada para atender às necessidades de gerenciamento de produtos de uma loja online ou qualquer negócio que lide com estoques de produtos, e pode facilmente ser adaptado
 para uma empresa que precisa controlar os dados referentes a seus clientes.
 
@@ -10,6 +10,7 @@ para uma empresa que precisa controlar os dados referentes a seus clientes.
 
 - Spring Boot: Framework de desenvolvimento Java para criar aplicativos Java facilmente.
 - MySQL : Banco de Dados Utilizado para armazenamento das informações.
+- JUnit: Para Testes Unitários.
 - Postman : Utilizado para teste das funcionalidades da API.
 
 ## Pré-Requisitos
