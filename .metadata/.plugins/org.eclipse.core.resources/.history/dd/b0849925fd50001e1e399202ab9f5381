@@ -1,0 +1,56 @@
+package com.api.produto.service;
+
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.mockitoSession;
+import static org.mockito.Mockito.when;
+
+import java.math.BigDecimal;
+import java.sql.Date;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.NoSuchElementException;
+import java.util.Optional;
+import java.util.UUID;
+
+import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+
+import com.api.produto.dtos.ProductRecordDTO;
+import com.api.produto.model.ProductModel;
+import com.api.produto.repositories.ProductRepository;
+
+import jakarta.transaction.Transactional;
+
+@SpringBootTest
+@Transactional
+class ProductServiceTest {
+	@Autowired
+	private ProductService productService;
+	@MockBean
+	private ProductRepository productRepositoryMock;
+
+	@Test
+	void testCreateProductSucess() {
+		// Cria um ProductRecordDTo ficticio para teste
+		ProductRecordDTO productRecordDTO = new ProductRecordDTO("Produto de Teste", new BigDecimal("300.00"));
+		//Date currentTime = new Date(System.currentTimeMillis());
+		// Método para criação do Produto
+		ProductModel createdProduct = productService.createProduct(productRecordDTO);
+
+		// Verificações
+		assertNotNull(createdProduct); // Verifica se o produto foi criado
+		assertNotNull(createdProduct.getIdProduct()); // Verifica se ID não é null
+		assertEquals("Produto de Teste", createdProduct.getName());// Verificação do Nome
+		//assertEquals(currentTime, createdProduct.getCreated_at()); // Verificação do CreatedAt
+		assertEquals(new BigDecimal("300.00"), createdProduct.getValue()); // Verificação de Preço
+	}
+
+	@Test
+	
+}

@@ -1,0 +1,162 @@
+package com.api.produto.service;
+
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.mockitoSession;
+import static org.mockito.Mockito.when;
+
+import java.math.BigDecimal;
+import java.sql.Date;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.NoSuchElementException;
+import java.util.Optional;
+import java.util.UUID;
+
+import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.dao.DataIntegrityViolationException;
+
+import com.api.produto.dtos.ProductRecordDTO;
+import com.api.produto.model.ProductModel;
+import com.api.produto.repositories.ProductRepository;
+
+import jakarta.transaction.Transactional;
+
+@SpringBootTest
+@Transactional
+class ProductServiceTest {
+	@Autowired
+	private ProductService productService;
+	@MockBean
+	private ProductRepository productRepository;
+
+	@Test
+	void testCreateProductSucess() {
+		// Cria um ProductRecordDTo ficticio para teste
+		ProductRecordDTO productRecordDTO = new ProductRecordDTO("Produto de Teste", new BigDecimal("300.00"));
+		Date currentTime = new Date(System.currentTimeMillis());
+		// Método para criação do Produto
+		ProductModel createdProduct = productService.createProduct(productRecordDTO);
+
+		// Verificações
+		assertNotNull(createdProduct); // Verifica se o produto foi criado
+		assertNotNull(createdProduct.getIdProduct()); // Verifica se ID não é null
+		assertEquals("Produto de Teste", createdProduct.getName());// Verificação do Nome
+		assertEquals(currentTime, createdProduct.getCreated_at()); // Verificação do CreatedAt
+		assertEquals(new BigDecimal("300.00"), createdProduct.getValue()); // Verificação de Preço
+	}
+
+	@Test
+	void testCreateProductWithDatabaseError() {
+
+		// Crie um ProductRecordDTO válido
+		ProductRecordDTO productRecordDTO = new ProductRecordDTO("Produto de Teste", new BigDecimal("300.00"));
+
+		// Forçando uma restrição única, criando o mesmo produto duas vezes
+		productService.createProduct(productRecordDTO);
+
+		assertThrows(DataIntegrityViolationException.class, () -> {
+			productService.createProduct(productRecordDTO);
+		});
+	}
+
+	@Test
+	void testCreateProductWithBlankName() {
+		ProductRecordDTO productRecordDTO = new ProductRecordDTO("", new BigDecimal("300.00"));
+		ProductModel createdProduct = productService.createProduct(productRecordDTO);
+		assertNull(createdProduct);
+	}
+
+	@Test
+	void testCreateProductWithBlankValue() {
+		assertThrows(NullPointerException.class, () -> {
+			ProductRecordDTO productRecordDTO = new ProductRecordDTO("Produto de Teste", new BigDecimal(""));
+			productService.createProduct(productRecordDTO);
+		});
+	}
+
+	@Test
+	// Teste para multiplos criados simultaneamente
+	void testCreateMultipleProducts() {
+		// Crie vários ProductRecordDTOs fictícios
+		ProductRecordDTO product1 = new ProductRecordDTO("Produto 1", new BigDecimal("10.00"));
+		ProductRecordDTO product2 = new ProductRecordDTO("Produto 2", new BigDecimal("20.00"));
+		ProductRecordDTO product3 = new ProductRecordDTO("Produto 3", new BigDecimal("30.00"));
+
+		// Crie os produtos e verifique se foram criados corretamente
+		ProductModel createdProduct1 = productService.createProduct(product1);
+		ProductModel createdProduct2 = productService.createProduct(product2);
+		ProductModel createdProduct3 = productService.createProduct(product3);
+
+		assertNotNull(createdProduct1);
+		assertNotNull(createdProduct2);
+		assertNotNull(createdProduct3);
+	}
+
+	/*
+	 * @Test void testGetAllProducts() { List<ProductRecordDTO> productList = new
+	 * ArrayList<>(); productList.add(new ProductRecordDTO("Produto 1", new
+	 * BigDecimal ("10.0"))); productList.add(new ProductRecordDTO("Produto 2", new
+	 * BigDecimal ("20.0"))); productList.add(new ProductRecordDTO("Produto 3", new
+	 * BigDecimal ("30.0")));
+	 * 
+	 * }
+	 */
+
+	@Test
+	void testGetProductById() {
+		fail("Not yet implemented");
+	}
+
+	@Test
+	public void testGetProductByIdSuccess() {
+		// Crie um UUID fictício para um produto existente
+		UUID productId = UUID.randomUUID();
+
+		// Crie um DTO fictício com base no UUID
+		ProductRecordDTO productRecordDTO = new ProductRecordDTO("Produto de Teste", new BigDecimal("10.0"));
+
+		// Crie um produto fictício com base no DTO
+		ProductModel product = new ProductModel();
+		product.setIdProduct(productId);
+		product.setName(productRecordDTO.name());
+		product.setValue(productRecordDTO.Value());
+		product.setCreated_at(new Date(System.currentTimeMillis()));
+
+		// Configure o mock do repositório para retornar o produto fictício quando o
+		// método findById() é chamado
+		when(productRepository.findById(productId)).thenReturn(Optional.of(product));
+
+		// Chame o método getProductById() com o UUID do produto fictício
+		ProductModel result = productService.getProductById(productId);
+
+		// Verifique se o produto retornado é o mesmo que o fictício
+		assertEquals(product, result);
+	}
+
+    @Test
+    public void testGetProductByIdFailure() {
+        // Crie um UUID fictício para um produto que não existe
+        UUID nonExistentProductId = UUID.randomUUID();
+
+        // Configure o mock do repositório para retornar um Optional vazio (produto não encontrado)
+        when(productRepository.findById(nonExistentProductId)).thenReturn(Optional.empty());
+
+        // Chame o método getProductById() com o UUID do produto fictício
+        // Deve lançar uma exceção (por exemplo, NoSuchElementException) quando o produto não é encontrado
+        assertThrows(NoSuchElementException.class, () -> productService.getProductById(nonExistentProductId));
+    }
+	@Test
+	void testUpdateProduct() {
+		fail("Not yet implemented");
+	}
+
+	@Test
+	void testDeleteProduct() {
+		fail("Not yet implemented");
+	}
+
+}
