@@ -21,7 +21,6 @@ public class ProductService {
 	private ProductRepository productRepository;
 
 	public ProductModel createProduct(@RequestBody @Valid ProductRecordDTO productRecordDTO) {
-
 		var productModel = new ProductModel(); // Vamos receber um productModel, não um DTO, o DTO é como se fosse
 		// apenas um modelo.
 		BeanUtils.copyProperties(productRecordDTO, productModel);
@@ -29,7 +28,6 @@ public class ProductService {
 		// Converte DTO para Model - Método do próprio string
 		// - Recebe o productRecordDto e converte para
 		// productModel
-
 		// Save também como recurso do spring
 		return productRepository.save(productModel);
 	}

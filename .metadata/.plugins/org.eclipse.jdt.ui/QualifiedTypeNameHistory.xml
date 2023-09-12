@@ -45,8 +45,9 @@
     <fullyQualifiedTypeName name="org.springframework.http.ResponseEntity"/>
     <fullyQualifiedTypeName name="org.springframework.beans.BeanUtils"/>
     <fullyQualifiedTypeName name="java.lang.NumberFormatException"/>
-    <fullyQualifiedTypeName name="com.api.produto.dtos.ProductRecordDTO"/>
     <fullyQualifiedTypeName name="org.springframework.test.annotation.Rollback"/>
     <fullyQualifiedTypeName name="com.api.produto.repositories.ProductRepository"/>
+    <fullyQualifiedTypeName name="com.api.produto.dtos.ProductRecordDTO"/>
+    <fullyQualifiedTypeName name="org.mockito.Mock"/>
     <fullyQualifiedTypeName name="com.api.produto.model.ProductModel"/>
 </qualifiedTypeNameHistroy>

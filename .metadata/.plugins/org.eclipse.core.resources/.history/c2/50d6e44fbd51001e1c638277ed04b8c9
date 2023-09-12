@@ -1,0 +1,254 @@
+package com.api.produto.service;
+
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
+import java.math.BigDecimal;
+import java.sql.Date;
+import java.util.Optional;
+import java.util.UUID;
+
+import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.dao.DataIntegrityViolationException;
+
+import com.api.produto.dtos.ProductRecordDTO;
+import com.api.produto.model.ProductModel;
+import com.api.produto.repositories.ProductRepository;
+
+import jakarta.transaction.Transactional;
+
+@SpringBootTest
+@Transactional
+class ProductServiceTest {
+	@Autowired
+	private ProductService productService;
+	@MockBean
+	private ProductRepository productRepositoryMock;
+
+	@Test
+	void testCreateProductSucess() {
+		// Cria um ProductRecordDTO ficticio para teste
+		ProductRecordDTO productRecordDTO = new ProductRecordDTO("Produto de Teste", new BigDecimal(300));
+		// Date currentTime = new Date(System.currentTimeMillis());
+
+		// Criação do produto para comparação.
+		ProductModel expectedProductModel = new ProductModel();
+		expectedProductModel.setName("Produto de Teste");
+		expectedProductModel.setValue(new BigDecimal("300"));
+		expectedProductModel.setCreated_at(new Date(System.currentTimeMillis()));
+		// Verificações
+		// Configurar o comportamento do mock do repository para retornar o objeto
+		// esperado
+		when(productRepositoryMock.save(any(ProductModel.class))).thenReturn(expectedProductModel);
+
+		ProductModel createdProduct = productService.createProduct(productRecordDTO);
+		// Verificar se o método save foi chamado com os parâmetros adequados
+		verify(productRepositoryMock, times(1)).save(any(ProductModel.class));
+
+		// Verifica se o objeto retornado é igual o esperado
+		assertEquals(expectedProductModel, createdProduct);
+
+	}
+
+	@Test
+	void testCreateProductWithDatabaseError() {
+
+		// Crie um ProductRecordDTO válido
+		ProductRecordDTO productRecordDTO = new ProductRecordDTO("Produto de Teste", new BigDecimal("300.00"));
+
+		// Forçando uma restrição única, criando o mesmo produto duas vezes
+		productService.createProduct(productRecordDTO);
+
+		assertThrows(DataIntegrityViolationException.class, () -> {
+			productService.createProduct(productRecordDTO);
+		});
+	}
+
+	@Test
+	void testCreateProductWithBlankName() {
+		ProductRecordDTO productRecordDTO = new ProductRecordDTO("", new BigDecimal("300.00"));
+		ProductModel createdProduct = productService.createProduct(productRecordDTO);
+		assertNull(createdProduct);
+	}
+
+	@Test
+	void testCreateProductWithBlankValue() {
+		assertThrows(NumberFormatException.class, () -> {
+			ProductRecordDTO productRecordDTO = new ProductRecordDTO("Produto de Teste", new BigDecimal(""));
+			productService.createProduct(productRecordDTO);
+		});
+	}
+
+	@Test
+	// Teste para multiplos criados simultaneamente
+	void testCreateMultipleProducts() {
+		// Crie vários ProductRecordDTOs fictícios
+		ProductRecordDTO product1 = new ProductRecordDTO("Produto 1", new BigDecimal("10.00"));
+		ProductRecordDTO product2 = new ProductRecordDTO("Produto 2", new BigDecimal("20.00"));
+		ProductRecordDTO product3 = new ProductRecordDTO("Produto 3", new BigDecimal("30.00"));
+
+		// Criação de Produtos para comparação.
+		ProductModel expectedProductModel1 = new ProductModel();
+		expectedProductModel1.setName("Produto 1");
+		expectedProductModel1.setValue(new BigDecimal("10.00"));
+		expectedProductModel1.setCreated_at(new Date(System.currentTimeMillis()));
+
+		ProductModel expectedProductModel2 = new ProductModel();
+		expectedProductModel2.setName("Produto 2");
+		expectedProductModel2.setValue(new BigDecimal("20.00"));
+		expectedProductModel2.setCreated_at(new Date(System.currentTimeMillis()));
+
+		ProductModel expectedProductModel3 = new ProductModel();
+		expectedProductModel3.setName("Produto 3");
+		expectedProductModel3.setValue(new BigDecimal("30.00"));
+		expectedProductModel3.setCreated_at(new Date(System.currentTimeMillis()));
+
+		// Configurar o comportamento do mock do repository para retornar o objeto
+		// esperado
+		when(productRepositoryMock.save(any(ProductModel.class))).thenReturn(expectedProductModel1)
+				.thenReturn(expectedProductModel2).thenReturn(expectedProductModel3);
+
+		ProductModel createdProduct1 = productService.createProduct(product1);
+		ProductModel createdProduct2 = productService.createProduct(product2);
+		ProductModel createdProduct3 = productService.createProduct(product3);
+
+		verify(productRepositoryMock, times(3)).save(any(ProductModel.class));
+
+		assertEquals(expectedProductModel1, createdProduct1);
+		assertEquals(expectedProductModel2, createdProduct2);
+		assertEquals(expectedProductModel3, createdProduct3);
+	}
+
+	@Test
+	public void testGetProductByIdSuccess() {
+		// Crie um UUID fictício para um produto existente
+		UUID productId = UUID.randomUUID();
+
+		// Crie um DTO fictício com base no UUID
+		ProductRecordDTO productRecordDTO = new ProductRecordDTO("Produto de Teste", new BigDecimal("10.0"));
+
+		// Crie um produto fictício com base no DTO
+		ProductModel product = new ProductModel();
+		product.setIdProduct(productId);
+		product.setName(productRecordDTO.name());
+		product.setValue(productRecordDTO.Value());
+		product.setCreated_at(new Date(System.currentTimeMillis()));
+
+		// Configure o mock do repositório para retornar o produto fictício quando o
+		// método findById() é chamado
+		when(productRepositoryMock.findById(productId)).thenReturn(Optional.of(product));
+
+		// Chame o método getProductById() com o UUID do produto fictício
+		ProductModel result = productService.getProductById(productId);
+
+		// Verifique se o produto retornado é o mesmo que o fictício
+		assertEquals(product, result);
+	}
+
+	@Test
+	public void testGetProductByIdFailure() {
+		UUID productID = UUID.randomUUID();
+		ProductModel product = productService.getProductById(productID);
+		// Verifica se o status da resposta é um NOT_FOUND
+		assertNull(product);
+	}
+
+	@Test
+	public void testUpdateProductSuccess() {
+		// Crie um UUID fictício para um produto existente
+		UUID productId = UUID.randomUUID();
+
+		// Crie um DTO fictício com os dados de atualização
+		ProductRecordDTO updatedProductDTO = new ProductRecordDTO("Produto Atualizado", new BigDecimal("20.0"));
+
+		// Crie um produto fictício existente com base no UUID
+		ProductModel existingProduct = new ProductModel();
+		existingProduct.setIdProduct(productId);
+		existingProduct.setName("Produto Antigo");
+		existingProduct.setValue(new BigDecimal("10.0"));
+
+		// Produto a ser atualizado para checagem
+		ProductModel checkProduct = new ProductModel();
+		checkProduct.setIdProduct(productId);
+		checkProduct.setName("Produto Atualizado");
+		checkProduct.setValue(new BigDecimal("20.0"));
+
+		// Simule o comportamento do repositório real para retornar o produto existente
+		// quando findById() é chamado
+		Mockito.when(productRepositoryMock.findById(productId)).thenReturn(Optional.of(existingProduct));
+
+		// Verifique se o produto foi atualizado corretamente
+		assertEquals(productId, existingProduct.getIdProduct());
+		assertEquals("Produto Atualizado", existingProduct.getName());
+		assertEquals(new BigDecimal("10.0"), existingProduct.getValue());
+	}
+
+	@Test
+	public void testUpdateProductNotFound() {
+		// Crie um UUID fictício para um produto que não existe
+		UUID productId = UUID.randomUUID();
+
+		// Crie um DTO fictício com os dados de atualização
+		ProductRecordDTO updatedProductDTO = new ProductRecordDTO("Produto Atualizado", new BigDecimal("20.0"));
+
+		// Simule o comportamento do repositório real para retornar um produto vazio
+		// quando findById() é chamado
+		Mockito.when(productRepositoryMock.findById(productId)).thenReturn(Optional.empty());
+
+		// Chame o método updateProduct() para atualizar o produto
+		ProductModel updatedProduct = productService.updateProduct(productId, updatedProductDTO);
+
+		// Verifique se o produto retornado é nulo, indicando que nenhum produto foi
+		// encontrado
+		assertNull(updatedProduct);
+	}
+
+	@Test
+	public void testDeleteProductSuccess() {
+		// Crie um UUID fictício para um produto existente
+		UUID productId = UUID.randomUUID();
+
+		// Crie um produto fictício existente com base no UUID
+		ProductModel existingProduct = new ProductModel();
+		existingProduct.setIdProduct(productId);
+		existingProduct.setName("Produto para Exclusão");
+		existingProduct.setValue(new BigDecimal("25.0"));
+
+		// Simule o comportamento do repositório real para retornar o produto existente
+		// quando findById() é chamado
+		Mockito.when(productRepositoryMock.findById(productId)).thenReturn(Optional.of(existingProduct));
+
+		// Simule o comportamento do repositório real para deletar o produto existente
+		Mockito.doNothing().when(productRepositoryMock).delete(existingProduct);
+
+		// Chame o método deleteProduct() para excluir o produto
+		boolean deleted = productService.deleteProduct(productId);
+
+		// Verifique se a exclusão foi bem-sucedida
+		assertTrue(deleted);
+	}
+
+	@Test
+	public void testDeleteProductNotFound() {
+		// Crie um UUID fictício para um produto que não existe
+		UUID productId = UUID.randomUUID();
+
+		// Simule o comportamento do repositório real para retornar um produto vazio
+		// quando findById() é chamado
+		Mockito.when(productRepositoryMock.findById(productId)).thenReturn(Optional.empty());
+
+		// Chame o método deleteProduct() para excluir o produto
+		boolean deleted = productService.deleteProduct(productId);
+
+		// Verifique se a exclusão não foi bem-sucedida (produto não encontrado)
+		assertFalse(deleted);
+	}
+
+}
